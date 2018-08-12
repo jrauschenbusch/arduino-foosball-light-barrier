@@ -1,0 +1,14 @@
+{
+  "name": "foosball-light-barrier-test-server",
+  "version": "1.0.0",
+  "description": "Simple HTTP echo web server",
+  "main": "test-server.js",
+  "scripts": {
+    "start": "node test-server.js"
+  },
+  "author": "Jochen Rauschenbusch",
+  "license": "UNLICENSED",
+  "dependencies" : {
+	  "httpdispatcher": "1.0.0"
+  }
+}

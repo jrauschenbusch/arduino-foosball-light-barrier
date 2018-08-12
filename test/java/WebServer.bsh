@@ -1,0 +1,156 @@
+//!BeanShell
+class WebServer extends Thread {
+
+    private final int port;
+
+    public WebServer(int listen_port) {
+        port = listen_port;
+        this.start();
+    }
+	
+    public void run() {
+        ServerSocket serversocket = null;
+        print("The simple httpserver v. 0000000000\nCoded by Jon Berg" + "<jon.berg[on server]turtlemeat.com>\n\n");
+
+        try {
+            print("Trying to bind to localhost on port " + Integer.toString(port) + "...");
+            serversocket = new ServerSocket(port);
+        } catch (Exception e) {
+            print("\nFatal Error:" + e.getMessage());
+            return;
+        }
+        print("OK!\n");
+        while (true) {
+            print("\nReady, Waiting for requests...\n");
+            try {
+
+                Socket connectionsocket = serversocket.accept();
+                InetAddress client = connectionsocket.getInetAddress();
+                print(client.getHostName() + " connected to server.\n");
+                BufferedReader input = new BufferedReader(new InputStreamReader(connectionsocket.getInputStream()));
+                DataOutputStream output = new DataOutputStream(connectionsocket.getOutputStream());
+
+                http_handler(input, output);
+            } catch (Exception e) {
+                print("\nError:" + e.getMessage());
+            }
+
+        }
+    }
+
+
+    private void http_handler(BufferedReader input, DataOutputStream output) {
+        int method = 0;
+        String http = new String();
+        String path = new String();
+        String file = new String();
+        String user_agent = new String();
+        try {
+            String tmp = input.readLine();
+            String tmp2 = new String(tmp);
+            tmp.toUpperCase();
+            if (tmp.startsWith("GET")) {
+                method = 1;
+            }
+            if (tmp.startsWith("HEAD")) {
+                method = 2;
+            }
+			if (tmp.startsWith("POST")) {
+                method = 3;
+            }
+
+            if (method == 0) {
+                try {
+                    output.writeBytes(constructHttpHeader(501, 0));
+                    output.close();
+                    return;
+                } catch (Exception e3) {
+                    print("error:" + e3.getMessage());
+                }
+            }
+            int start = 0;
+            int end = 0;
+            for (int a = 0; a < tmp2.length(); a++) {
+                if (tmp2.charAt(a) == ' ' && start != 0) {
+                    end = a;
+                    break;
+                }
+                if (tmp2.charAt(a) == ' ' && start == 0) {
+                    start = a;
+                }
+            }
+            path = tmp2.substring(start + 2, end);
+			
+			print("\nClient requested: " + path + "\n");
+			
+			/*
+			String line;
+			while((line = input.readLine()) != null && !line.startsWith("--<<--")) {
+				print(line);
+			}
+			*/
+        } catch (Exception e) {
+            print("Error: " + e.getMessage());
+        }
+		
+        try {
+            output.writeBytes(constructHttpHeader(200, 0));
+            output.close();
+        } catch (Exception e) {
+			print("Error: " + e.getMessage());
+        }
+
+    }
+
+    private String constructHttpHeader(int returnCode, int fileType) {
+        String responseHeader = "HTTP/1.0 ";
+        switch (returnCode) {
+            case 200:
+                responseHeader = responseHeader + "200 OK";
+                break;
+            case 400:
+                responseHeader = responseHeader + "400 Bad Request";
+                break;
+            case 403:
+                responseHeader = responseHeader + "403 Forbidden";
+                break;
+            case 404:
+                responseHeader = responseHeader + "404 Not Found";
+                break;
+            case 500:
+                responseHeader = responseHeader + "500 Internal Server Error";
+                break;
+            case 501:
+                responseHeader = responseHeader + "501 Not Implemented";
+                break;
+        }
+		
+        responseHeader = responseHeader + "\r\n";
+        responseHeader = responseHeader + "Connection: close\r\n";
+        responseHeader = responseHeader + "Server: SimpleHTTPtutorial v0\r\n";
+
+        switch (fileType) {
+            case 0:
+                break;
+            case 1:
+                responseHeader = responseHeader + "Content-Type: image/jpeg\r\n";
+                break;
+            case 2:
+                responseHeader = responseHeader + "Content-Type: image/gif\r\n";
+				break;
+            case 3:
+                responseHeader = responseHeader + "Content-Type: application/x-zip-compressed\r\n";
+				break;
+            default:
+                responseHeader = responseHeader + "Content-Type: text/html\r\n";
+                break;
+        }
+		
+        responseHeader = responseHeader + "\r\n";
+        return responseHeader;
+    }
+	
+
+}
+
+WebServer classTest = new WebServer(19000);
